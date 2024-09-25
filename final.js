@@ -1,4 +1,5 @@
 (function() {
+    console.log("Script loaded");
     let lastUrl = '';
 
     function handleUrlChange() {
