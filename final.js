@@ -29,8 +29,8 @@
                         console.log(`Diarization data for message ${messageId}:`, transcriptData);
                         const diarizationStatus = transcriptData.status;
                         console.log(`Diarization status for message ${messageId}:`, diarizationStatus);
-                        // Pass the diarization_data instead of segments
-                        addDiarizationButton(message, transcriptData.diarization_data);
+                        // Pass both diarization_data and diarization_summary
+                        addDiarizationButtons(message, transcriptData.diarization_data, transcriptData.diarization_summary);
                     })
                     .catch(error => {
                         console.error(`Error getting transcript for message ${messageId}:`, error);
@@ -40,7 +40,7 @@
         });
     }
 
-    function addDiarizationButton(messageElement, diarizationData) {
+    function addDiarizationButtons(messageElement, diarizationData, diarizationSummary) {
         // Check if a message action div already exists
         let messageActionEl = messageElement.querySelector('.message-action');
         
@@ -59,21 +59,59 @@
             }
         }
 
-        // Check if the button already exists
+        // Check if the buttons already exist
         if (!messageActionEl.querySelector('.diarization-view-button')) {
-            const button = document.createElement('button');
-            button.textContent = 'View Transcript';
-            button.classList.add('diarization-view-button', 'btn', 'btn-primary');
+            const summaryButton = document.createElement('button');
+            summaryButton.textContent = 'Summary';
+            summaryButton.classList.add('diarization-summary-button', 'btn', 'btn-secondary');
         
-            button.addEventListener('click', () => {
+            summaryButton.addEventListener('click', () => {
+                console.log("Showing summary popup for message:", messageElement);
+                console.log("Diarization summary:", diarizationSummary);
+                showSummaryPopup(diarizationSummary);
+            });
+
+            const viewTranscriptButton = document.createElement('button');
+            viewTranscriptButton.textContent = 'View Transcript';
+            viewTranscriptButton.classList.add('diarization-view-button', 'btn', 'btn-primary');
+        
+            viewTranscriptButton.addEventListener('click', () => {
                 console.log("Showing diarization popup for message:", messageElement);
                 console.log("Diarization data:", diarizationData);
                 showDiarizationPopup(diarizationData);
             });
 
-            messageActionEl.appendChild(button);
+            messageActionEl.appendChild(summaryButton);
+            messageActionEl.appendChild(viewTranscriptButton);
         }
     }
+
+    function showSummaryPopup(summary) {
+        const popup = document.createElement('div');
+        popup.classList.add('diarization-popup');
+    
+        popup.innerHTML = `
+            <div class="diarization-popup-content">
+                <span class="diarization-close-button">&times;</span>
+                <h2>Call Summary</h2>
+                <div class="diarization-summary">${summary}</div>
+            </div>
+        `;
+    
+        document.body.appendChild(popup);
+    
+        const closeButton = popup.querySelector('.diarization-close-button');
+        closeButton.addEventListener('click', () => {
+            document.body.removeChild(popup);
+        });
+    
+        popup.addEventListener('click', (event) => {
+            if (event.target === popup) {
+                document.body.removeChild(popup);
+            }
+        });
+    }
+
 
     function showDiarizationPopup(diarizationData) {
         console.log("Mapping diarization data to HTML...: ", diarizationData);
@@ -267,59 +305,76 @@
     
     // Set up an interval to check for URL changes
     setInterval(checkURLChange, 100);
-
-    // Add styles for the popup and button
-    const style = document.createElement('style');
-    style.textContent = `
-        .diarization-popup {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .diarization-popup-content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 5px;
-            max-width: 80%;
-            max-height: 80%;
-            overflow-y: auto;
-            position: relative;
-        }
-        .diarization-close-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            cursor: pointer;
-            font-size: 24px;
-        }
-        .diarization-segment {
-            margin-bottom: 10px;
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
-        .diarization-view-button {
-            font-size: 12px;
-            padding: 2px 8px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .diarization-view-button:hover {
-            background-color: #0056b3;
-        }
-    `;
-    document.head.appendChild(style);
+  // Update the styles to include the new summary button
+  const style = document.createElement('style');
+  style.textContent = `
+      .diarization-popup {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+      }
+      .diarization-popup-content {
+          background-color: white;
+          padding: 20px;
+          border-radius: 5px;
+          max-width: 80%;
+          max-height: 80%;
+          overflow-y: auto;
+          position: relative;
+      }
+      .diarization-close-button {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          cursor: pointer;
+          font-size: 24px;
+      }
+      .diarization-segment {
+          margin-bottom: 10px;
+          padding: 5px 10px;
+          border-radius: 5px;
+      }
+      .diarization-view-button,
+      .diarization-summary-button {
+          font-size: 12px;
+          padding: 2px 8px;
+          border: none;
+          border-radius: 3px;
+          cursor: pointer;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin-right: 5px;
+      }
+      .diarization-view-button {
+          background-color: #007bff;
+          color: white;
+      }
+      .diarization-summary-button {
+          background-color: #6c757d;
+          color: white;
+      }
+      .diarization-view-button:hover {
+          background-color: #0056b3;
+      }
+      .diarization-summary-button:hover {
+          background-color: #5a6268;
+      }
+      .message-action {
+          display: flex;
+          flex-direction: row;
+          justify-content: flex-end;
+          max-height: 30px;
+          border-radius: 5px;
+      }
+  `;
+  document.head.appendChild(style);
 
 })();
